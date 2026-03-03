@@ -1,0 +1,17 @@
+ktor:
+  application:
+    modules:
+      - org.delcom.ApplicationKt.module
+  deployment:
+    port: ${APP_PORT}
+    host: ${APP_HOST}
+
+  database:
+    host: ${DB_HOST}
+    port: ${DB_PORT}
+    name: ${DB_NAME}
+    user: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+  jwt:
+    secret: "${JWT_SECRET}"
