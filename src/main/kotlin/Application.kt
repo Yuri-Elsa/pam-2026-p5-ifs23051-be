@@ -21,7 +21,7 @@ import org.koin.ktor.plugin.Koin
 fun main(args: Array<String>) {
     val dotenv = dotenv {
         directory = "."
-        ignoreIfMissing = false
+        ignoreIfMissing = true // Ubah ke true agar tidak crash jika .env tidak ada
     }
 
     dotenv.entries().forEach {
@@ -34,6 +34,7 @@ fun main(args: Array<String>) {
 fun Application.module() {
 
     val jwtSecret = environment.config.property("ktor.jwt.secret").getString()
+        .ifBlank { "default-secret-key-for-development-only" } // Fallback jika kosong
 
     install(Authentication) {
         jwt(JWTConstants.NAME) {
