@@ -21,7 +21,7 @@ import org.koin.ktor.plugin.Koin
 fun main(args: Array<String>) {
     val dotenv = dotenv {
         directory = "."
-        ignoreIfMissing = true // Ubah ke true agar tidak crash jika .env tidak ada
+        ignoreIfMissing = true
     }
 
     dotenv.entries().forEach {
@@ -33,8 +33,17 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
 
-    val jwtSecret = environment.config.property("ktor.jwt.secret").getString()
-        .ifBlank { "default-secret-key-for-development-only" } // Fallback jika kosong
+    // Ambil JWT secret: coba dari config, lalu dari system property, lalu fallback
+    val jwtSecret = try {
+        environment.config.property("ktor.jwt.secret").getString()
+    } catch (e: Exception) {
+        ""
+    }.let { configValue ->
+        configValue
+            .ifBlank { System.getProperty("JWT_SECRET", "") }
+            .ifBlank { System.getenv("JWT_SECRET") ?: "" }
+            .ifBlank { "default-secret-key-for-development-only-32chars" }
+    }
 
     install(Authentication) {
         jwt(JWTConstants.NAME) {
