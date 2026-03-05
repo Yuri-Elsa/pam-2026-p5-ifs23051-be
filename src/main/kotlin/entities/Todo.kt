@@ -14,7 +14,7 @@ data class Todo(
     var description: String,
     var isDone: Boolean = false,
     var urgency: String = "medium",
-    var cover: String?,
+    var cover: String? = null,
 
     @Contextual
     val createdAt: Instant = Clock.System.now(),

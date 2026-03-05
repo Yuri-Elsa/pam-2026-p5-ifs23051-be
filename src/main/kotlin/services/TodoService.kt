@@ -9,9 +9,11 @@ import io.ktor.util.cio.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import org.delcom.data.AppException
 import org.delcom.data.DataResponse
 import org.delcom.data.TodoRequest
+import org.delcom.entities.Todo
 import org.delcom.helpers.ServiceHelper
 import org.delcom.helpers.ValidatorHelper
 import org.delcom.repositories.ITodoRepository
@@ -19,10 +21,53 @@ import org.delcom.repositories.IUserRepository
 import java.io.File
 import java.util.*
 
+// ── Serializable response wrappers ────────────────────────────────────────────
+
+@Serializable
+data class StatsData(
+    val total: Long,
+    val done: Long,
+    val pending: Long
+)
+
+@Serializable
+data class StatsResponse(
+    val stats: StatsData
+)
+
+@Serializable
+data class PaginationData(
+    val currentPage: Int,
+    val perPage: Int,
+    val total: Long,
+    val totalPages: Int,
+    val hasNextPage: Boolean,
+    val hasPrevPage: Boolean
+)
+
+@Serializable
+data class TodosResponse(
+    val todos: List<Todo>,
+    val pagination: PaginationData
+)
+
+@Serializable
+data class TodoResponse(
+    val todo: Todo
+)
+
+@Serializable
+data class TodoAddResponse(
+    val todoId: String
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 class TodoService(
     private val userRepo: IUserRepository,
     private val todoRepo: ITodoRepository
 ) {
+
     // Mengambil statistik todo saya
     suspend fun getStats(call: ApplicationCall) {
         val user = ServiceHelper.getAuthUser(call, userRepo)
@@ -30,14 +75,10 @@ class TodoService(
         val (total, done, pending) = todoRepo.getStats(user.id)
 
         val response = DataResponse(
-            "success",
-            "Berhasil mengambil statistik todo",
-            mapOf(
-                "stats" to mapOf(
-                    "total" to total,
-                    "done" to done,
-                    "pending" to pending
-                )
+            status = "success",
+            message = "Berhasil mengambil statistik todo",
+            data = StatsResponse(
+                stats = StatsData(total = total, done = done, pending = pending)
             )
         )
         call.respond(response)
@@ -71,17 +112,17 @@ class TodoService(
         val totalPages = if (total == 0L) 1 else Math.ceil(total.toDouble() / perPage).toInt()
 
         val response = DataResponse(
-            "success",
-            "Berhasil mengambil daftar todo saya",
-            mapOf(
-                "todos" to todos,
-                "pagination" to mapOf(
-                    "currentPage" to page,
-                    "perPage" to perPage,
-                    "total" to total,
-                    "totalPages" to totalPages,
-                    "hasNextPage" to (page < totalPages),
-                    "hasPrevPage" to (page > 1)
+            status = "success",
+            message = "Berhasil mengambil daftar todo saya",
+            data = TodosResponse(
+                todos = todos,
+                pagination = PaginationData(
+                    currentPage = page,
+                    perPage = perPage,
+                    total = total,
+                    totalPages = totalPages,
+                    hasNextPage = page < totalPages,
+                    hasPrevPage = page > 1
                 )
             )
         )
@@ -101,9 +142,9 @@ class TodoService(
         }
 
         val response = DataResponse(
-            "success",
-            "Berhasil mengambil data todo",
-            mapOf(Pair("todo", todo))
+            status = "success",
+            message = "Berhasil mengambil data todo",
+            data = TodoResponse(todo = todo)
         )
         call.respond(response)
     }
@@ -173,7 +214,11 @@ class TodoService(
             if (oldFile.exists()) oldFile.delete()
         }
 
-        val response = DataResponse("success", "Berhasil mengubah cover todo", null)
+        val response = DataResponse(
+            status = "success",
+            message = "Berhasil mengubah cover todo",
+            data = null as String?
+        )
         call.respond(response)
     }
 
@@ -197,9 +242,9 @@ class TodoService(
         val todoId = todoRepo.create(request.toEntity())
 
         val response = DataResponse(
-            "success",
-            "Berhasil menambahkan data todo",
-            mapOf(Pair("todoId", todoId))
+            status = "success",
+            message = "Berhasil menambahkan data todo",
+            data = TodoAddResponse(todoId = todoId)
         )
         call.respond(response)
     }
@@ -236,7 +281,11 @@ class TodoService(
             throw AppException(400, "Gagal memperbarui data todo!")
         }
 
-        val response = DataResponse("success", "Berhasil mengubah data todo", null)
+        val response = DataResponse(
+            status = "success",
+            message = "Berhasil mengubah data todo",
+            data = null as String?
+        )
         call.respond(response)
     }
 
@@ -262,7 +311,11 @@ class TodoService(
             if (oldFile.exists()) oldFile.delete()
         }
 
-        val response = DataResponse("success", "Berhasil menghapus data todo", null)
+        val response = DataResponse(
+            status = "success",
+            message = "Berhasil menghapus data todo",
+            data = null as String?
+        )
         call.respond(response)
     }
 
