@@ -30,6 +30,11 @@ class UserService(
     suspend fun getMe(call: ApplicationCall) {
         val user = ServiceHelper.getAuthUser(call, userRepo)
 
+        // Bangun urlPhoto hanya jika user memiliki foto tersimpan
+        val urlPhoto = if (!user.photo.isNullOrBlank()) {
+            "/images/users/${user.id}"
+        } else null
+
         val response = DataResponse(
             "success",
             "Berhasil mengambil informasi akun saya",
@@ -39,6 +44,8 @@ class UserService(
                     name = user.name,
                     username = user.username,
                     about = user.about,
+                    photo = user.photo,
+                    urlPhoto = urlPhoto,
                     createdAt = user.createdAt,
                     updatedAt = user.updatedAt,
                 ),
